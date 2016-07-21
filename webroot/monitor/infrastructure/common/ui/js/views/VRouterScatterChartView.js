@@ -60,6 +60,10 @@ define(['underscore', 'contrail-view'], function(_, ContrailView) {
                                bubbleSizeFn: function(d) {
                                     return d3.max(d,function(d) { return d.size;});
                                },
+                               //FIX FOR THE BUG https://bugs.launchpad.net/juniperopenstack/+bug/1597347 
+                               bubbleCfg : {
+                                    defaultMaxValue : monitorInfraConstants.VROUTER_DEFAULT_MAX_THROUGHPUT
+                               },
                                tooltipConfigCB: monitorInfraUtils.vRouterTooltipFn,
                                controlPanelConfig: {
                                    // legend: {
