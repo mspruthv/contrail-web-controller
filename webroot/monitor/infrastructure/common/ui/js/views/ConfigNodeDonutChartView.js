@@ -9,7 +9,7 @@ define(['underscore', 'contrail-view'],function(_, ContrailView){
                 viewConfig = self.attributes.viewConfig;
             this.renderView4Config(this.$el, this.model,
                     getConfigNodeDonutChartViewConfig(), null, null, null, function () {
-                if (viewConfig['widgetConfig'] !== null) {
+                if (viewConfig['widgetConfig'] != null) {
                     self.renderView4Config($(self.$el).find('.section-content'), self.model, viewConfig['widgetConfig'], null, null, null);
                 }
             });
@@ -30,17 +30,19 @@ define(['underscore', 'contrail-view'],function(_, ContrailView){
                             parseFn: function (response) {
                                 return monitorInfraParsers
                                     .parseConfigNodeRequestForDonutChart(
-                                         response, ['POST', 'PUT', 'DELETE']);
+                                         response, ['GET']);
                             },
                             chartOptions: {
                                 height: 160,
                                 margin: {
-                                    bottom: 10,
-                                    top: 10
+                                    top: 10,
+                                    bottom: 10
                                 },
                                 showLabels: false,
-                                title: 'Write',
-                                defaultDataStatusMessage: false
+                                showLegend: false,
+                                title: 'Reads',
+                                defaultDataStatusMessage: false,
+                                showEmptyDonut: true
                             },
                         }
                     }, {
@@ -51,34 +53,18 @@ define(['underscore', 'contrail-view'],function(_, ContrailView){
                             parseFn: function (response) {
                                 return monitorInfraParsers
                                     .parseConfigNodeRequestForDonutChart(
-                                         response, ['GET']);
+                                         response, ['POST', 'PUT', 'DELETE']);
                             },
                             chartOptions: {
                                 height: 160,
                                 margin: {
-                                    top: 10,
-                                    bottom: 10
+                                    bottom: 10,
+                                    top: 10
                                 },
                                 showLabels: false,
-                                showLegend: true,
-                                title: 'Read',
+                                title: 'Writes',
                                 defaultDataStatusMessage: false,
-                                legendFn: function (data, svg, chart) {
-                                    if (data != null && svg != null && chart != null) {
-                                        $(svg).find('g.contrail-legendWrap').remove();
-                                        var width = parseInt($(svg).css('width') || svg.getBBox()['width']);
-                                        var legendWrap = d3.select(svg)
-                                            .append('g')
-                                            .attr('transform', 'translate('+width+', 0)')
-                                            .attr('class', 'contrail-legendWrap');
-                                        monitorInfraUtils.addLegendToSummaryPageCharts({
-                                            container: legendWrap,
-                                            cssClass: 'contrail-legend-donut',
-                                            data: data,
-                                            label: 'Config Nodes'
-                                        });
-                                    }
-                                }
+                                showEmptyDonut: true
                             },
                         }
                     }]

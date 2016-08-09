@@ -11,7 +11,7 @@ define([
     //Remove all query references once it is moved to core
 ], function (_, Knockback, ContrailView, ContrailListModel, ControlNodeRoutesModel) {
     var routingInstancesDropdownList = [{text:'All',value:'All'}],
-    backwardRouteStack = [], forwardRouteStack = [];
+    backwardRouteStack = [], forwardRouteStack = [], filteredPrefix = '', routInstance = '';
     var ControlNodeRoutesFormView = ContrailView.extend({
         render: function (options) {
             var self = this, viewConfig = self.attributes.viewConfig,
@@ -27,9 +27,27 @@ define([
             self.model = controlNodeRoutesModel;
             self.$el.append(routesTmpl({prefix: prefix}));
 
+            var remoteAjaxConfig = {
+                    remote: {
+                        ajaxConfig: {
+                            url: contrail.format(monitorInfraConstants.
+                                    monitorInfraUrls['CONTROLNODE_ROUTE_INST_LIST'], 
+                                    hostname),
+                            type: "GET",
+                        },
+                        dataParser: parseRoutingInstanceResp
+                    },
+                    cacheConfig: {
+                    }
+            };
+            var routingInstanceListModel = new ContrailListModel(remoteAjaxConfig);
+            routingInstanceListModel.onDataUpdate.subscribe(function(){
+                self.model.routingInstanceOptionList(routingInstanceListModel.getItems());
+            })
+
             self.renderView4Config($(self.$el).find(routesFormId),
                     this.model,
-                    self.getViewConfig(options,viewConfig),
+                    self.getViewConfig(options,viewConfig,routingInstanceListModel),
                     null,
                     null,
                     null,
@@ -45,9 +63,6 @@ define([
                         });
                     }
             );
-            var transportCfg = {
-                    url: contrail.format(monitorInfraConstants.monitorInfraUrls['CONTROLNODE_ROUTE_INST_LIST'], hostname, 40)
-                };
             if (widgetConfig !== null) {
                 self.renderView4Config($(self.$el).find(routesFormId),
                         self.model, widgetConfig, null, null, null);
@@ -69,9 +84,17 @@ define([
 
             //Making the Routes call here as the result also needs to be update
             //prefix value in this form
-            var routesQueryString = self.model.getControlRoutesQueryString()
-            var limit = parseInt(routesQueryString.limit) + 1;
-            routesQueryString.limit = limit.toString();
+            var routesQueryString = self.model.getControlRoutesQueryString();
+            if(routesQueryString.prefix !== undefined){
+                filteredPrefix = routesQueryString.prefix;
+            }else{
+                filteredPrefix = '';
+            }
+            if(routesQueryString.routingInst !== undefined){
+                routInstance = routesQueryString.routingInst;
+            }else{
+                routInstance = '';
+            }
             var routesRemoteConfig = {
                     url: monitorInfraConstants.
                         monitorInfraUrls['CONTROLNODE_ROUTES'] +
@@ -84,19 +107,19 @@ define([
                         ajaxConfig : routesRemoteConfig,
                         dataParser : function (response) {
                             var selValues = {};
-                            backwardRoutes(response);
-                            forwardRoutes(response);
+                            backwardRouteStack = []; forwardRouteStack = [];
                             var parsedData = monitorInfraParsers.
                                         parseRoutes(response,routesQueryString);
-                            //TODO need to update the prefix autocomplete
-                            var prefixArray = [];
+                            if(getValueByJsonPath(response[0],'ShowRouteResp;tables;list','') !== ''){
+                                backwardRoutes(response);
+                                forwardRoutes(response);
+                            }
+                            var prefixList = [];
                             $.each(parsedData,function(i,d){
-                                prefixArray.push(d.dispPrefix);
+                                prefixList.push({text:d.dispPrefix,value:d.dispPrefix});
                             });
-                            $('#prefix').find('input').autocomplete( "option", "source" ,prefixArray);
-                            parsedData.pop();
+                            self.model.prefixOptionList(prefixList);
                             return parsedData;
-
                         }
                     },
                     cacheConfig : {
@@ -104,8 +127,8 @@ define([
                     }
                 };
             var backwardRoutes = function(model){
-                var routingTable, showRoute, routingInstance, prefix,
-                showRouteTable = model[0].ShowRouteResp.tables.list.ShowRouteTable;
+                var routingTable, showRoute, routingInstance, prefix;
+                var showRouteTable = getValueByJsonPath(model[0],'ShowRouteResp;tables;list;ShowRouteTable',{});
                 if(showRouteTable.constructor().length === undefined){
                     routingTable = showRouteTable.routing_table_name;
                     routingInstance =  showRouteTable.routing_instance;
@@ -120,16 +143,32 @@ define([
                 }else{
                     prefix = showRoute[0].prefix;
                 }
-                backwardRouteStack.push({
-                    limit: routesQueryString.limit,
-                    startRoutingTable: routingTable,
-                    startRoutingInstance: routingInstance,
-                    startPrefix: prefix
-                });
+                if(checkNonExistRoute(backwardRouteStack, routingTable, prefix)){
+                    backwardRouteStack.push({
+                        limit: routesQueryString.limit,
+                        startRoutingTable: routingTable,
+                        startRoutingInstance: routingInstance,
+                        startPrefix: prefix,
+                        prefix: filteredPrefix,
+                        routingInst:routInstance
+                    });
+                }
+            };
+            var checkNonExistRoute = function(existingStack,routeTable,prefix){
+                var nonExistRecord = false;
+                if(existingStack.length !== 0){
+                    var lastRecord = existingStack[existingStack.length - 1];
+                    if(lastRecord.startRoutingTable !== routeTable){
+                        nonExistRecord = true;
+                    }
+                 return nonExistRecord;
+                }else{
+                    return true;
+                }
             };
             var forwardRoutes = function(model){
-                var routingTable, showRoute, routingInstance, prefix,
-                showRouteTable = model[0].ShowRouteResp.tables.list.ShowRouteTable;
+                var routingTable, showRoute, routingInstance, prefix;
+                var showRouteTable = getValueByJsonPath(model[0],'ShowRouteResp;tables;list;ShowRouteTable',{});
                 if(showRouteTable.constructor().length === undefined){
                     routingTable = showRouteTable.routing_table_name;
                     routingInstance =  showRouteTable.routing_instance;
@@ -148,7 +187,9 @@ define([
                     limit: routesQueryString.limit,
                     startRoutingTable: routingTable,
                     startRoutingInstance: routingInstance,
-                    startPrefix: prefix
+                    startPrefix: prefix,
+                    prefix: filteredPrefix,
+                    routingInst:routInstance
                 });
             };
             var model = new ContrailListModel(listModelConfig);
@@ -163,15 +204,6 @@ define([
                                 forwardRoutes(response);
                                 var parsedData = monitorInfraParsers.
                                 parseRoutes(response, routesQueryString);
-                                //check for last data in the grid
-                                if(parsedData.length < routesQueryString.limit){
-                                    if((parsedData.length + 1) != routesQueryString.limit){
-                                        forwardRouteStack.pop();
-                                    }
-                                }
-                                if(parsedData.length >= routesQueryString.limit){
-                                    parsedData.pop();
-                                }
                                 return parsedData;
                             },
                             getUrlFn: function(step) {
@@ -187,17 +219,19 @@ define([
                                     backwardRouteStack.splice(backwardRouteStack.length - 1, 1);
                                     urlParm = backwardRouteStack.pop();
                                     forwardRouteStack.pop();
-                                    return monitorInfraConstants.
-                                    monitorInfraUrls['CONTROLNODE_ROUTES'] +
-                                    '?ip=' + hostname +
-                                    '&' + $.param(urlParm);
+                                    if(urlParm !== undefined){
+                                        return monitorInfraConstants.
+                                        monitorInfraUrls['CONTROLNODE_ROUTES'] +
+                                        '?ip=' + hostname +
+                                        '&' + $.param(urlParm);
+                                    }
                                  }
                              }
                         });
                     });
         },
 
-        getViewConfig: function (options,viewConfig) {
+        getViewConfig: function (options,viewConfig,routingInstanceListModel) {
             var self = this;
             var hostname = viewConfig['hostname'];
             var addressFamilyList = ["All","enet","ermvpn","evpn",
@@ -221,26 +255,29 @@ define([
                                         path: 'routing_instance',
                                         dataBindValue: 'routing_instance',
                                         class: "span6",
+                                        dataBindOptionList: 'routingInstanceOptionList',
                                         elementConfig: {
                                             defaultValueId: 0,
                                             dropdownAutoWidth : false,
                                             dataTextField:'text',
-                                            dataValueField:'value',
-                                            data: routingInstancesDropdownList
+                                            dataValueField:'value'
                                         }
                                     }
                                 },
                                 {
                                     elementId: 'prefix',
-                                    view: "FormAutoCompleteTextBoxView",
+                                    view: "FormComboboxView",
                                     viewConfig: {
+                                        label:'Prefix',
                                         path: 'prefix',
-                                        placeHolder:'Prefix',
-                                        dataBindValue: 'prefix',
                                         class: "span2",
+                                        dataBindValue: 'prefix',
+                                        dataBindOptionList: 'prefixOptionList',
                                         elementConfig: {
-                                            source : []
-                                        }
+                                            dataTextField: "text",
+                                            dataValueField: "value",
+                                            placeholder: 'Prefix'
+                                         }
                                     }
                                 },
                                 {
@@ -358,12 +395,7 @@ define([
             }
 
         }
-        var ddRoutingInstance = $( "#routing_instance_dropdown" ).data('contrailDropdown');
-        if(ddRoutingInstance != null) {
-            ddRoutingInstance.setData(routingInstancesDropdownList);
-        }
-
-        return ret;
+        return routingInstancesDropdownList;
 
     }
     return ControlNodeRoutesFormView;
