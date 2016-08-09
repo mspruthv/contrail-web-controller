@@ -77,26 +77,24 @@ define([
                     break;
             }
         },
+        this.updateViewByHash = function (currPageQueryStr) {
+            var renderFn;
 
-            this.updateViewByHash = function (currPageQueryStr) {
-                var renderFn;
+            //TODO: The renderFunction should be passed from ContentHandler
+            if(currPageQueryStr.type == "network"){
+                renderFn = "renderNetworks";
+            } else if (currPageQueryStr.type == "project"){
+                renderFn = "renderProjects"
+            } else if (currPageQueryStr.type == "instance"){
+                renderFn = "renderInstances"
+            } else if (currPageQueryStr.type == "interface"){
+                renderFn = "renderInterfaces"
+            } else if (currPageQueryStr.type == "flow"){
+                renderFn = "renderFlows"
+            }
 
-                //TODO: The renderFunction should be passed from ContentHandler
-                if(currPageQueryStr.type == "network"){
-                    renderFn = "renderNetworks";
-                } else if (currPageQueryStr.type == "project"){
-                    renderFn = "renderProjects"
-                } else if (currPageQueryStr.type == "instance"){
-                    renderFn = "renderInstances"
-                } else if (currPageQueryStr.type == "interface"){
-                    renderFn = "renderInterfaces"
-                } else if (currPageQueryStr.type == "flow"){
-                    renderFn = "renderFlows"
-                }
-
-                this.load({hashParams: currPageQueryStr, 'function': renderFn});
-            };
-
+            this.load({hashParams: currPageQueryStr, 'function': renderFn});
+        };
         this.destroy = function () {};
     };
 

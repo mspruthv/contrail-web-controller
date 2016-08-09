@@ -716,7 +716,35 @@ module.exports = function (grunt) {
                 },
                 feature: 'config'
             }
-        }
+        },
+        vRouterScatterChartView: {
+            options: {
+                files: [
+                    {
+                        pattern: 'contrail-web-controller/webroot/monitor/infrastructure/vrouter/test/ui/views/VRouterScatterChartView.test.js',
+                        included: false
+                    }
+                ],
+                preprocessors: {
+                    'contrail-web-controller/webroot/monitor/infrastructure/common/ui/js/**/*.js': ['coverage']
+                },
+                junitReporter: {
+                    outputDir: __dirname + '/reports/tests/vr/views/',
+                    outputFile: 'vrouter-scatter-chart-view-test-results.xml',
+                    suite: 'vRouterScatterChartView',
+                    useBrowserName: false
+                },
+                htmlReporter: {
+                    outputFile: __dirname + '/reports/tests/vr/views/vrouter-scatter-chart-view-test-results.html'
+                },
+                coverageReporter: {
+                    type: 'html',
+                    dir: __dirname + '/reports/coverage/vr/views/vRouterScatterChartView/',
+                    subdir: browserSubdirFn
+                },
+                feature: 'vr'
+            }
+        },
 //        routeAggregateGridView : {
 //            options: {
 //                files: [
@@ -899,7 +927,8 @@ module.exports = function (grunt) {
             instanceListView: 'instanceListView',
             instanceView: 'instanceView',
             flowListView: 'flowListView',
-            flowGridView: 'flowGridView'
+            flowGridView: 'flowGridView',
+            vRouterScatterChartView: 'vRouterScatterChartView'
         }
     });
 

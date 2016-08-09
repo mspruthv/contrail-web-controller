@@ -38,6 +38,8 @@ define([
         this.ROUTE_AGGREGATE_GRID_VIEW_COMMON_TEST_MODULE = 'Route Aggregate Grid View - Common Tests';
         this.PORT_GRID_VIEW_COMMON_TEST_MODULE = 'Port Grid View - Common Tests';
 
+        this.VROUTER_ZOOM_SCATTER_CHART_TEST_MODULE='VRouter Zoom Scatter Chart - Common Tests';
+
         this.get = function () {
             var args = arguments;
             return args[0].replace(/\{(\d+)\}/g, function (m, n) {
