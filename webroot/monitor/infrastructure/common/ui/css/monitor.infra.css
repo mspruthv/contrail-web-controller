@@ -30,6 +30,7 @@
 #config-nodes-linebarchart{
     width:43% !important;
 }
+
 #analytics-chart-sandesh-stackedbarchart-id .chart-container g.main text.axis-label, 
 #analytics-chart-queries-stackedbarchart-id .chart-container g.main text.axis-label, 
 #analytics-chart-database-read-stackedbarchart-id .chart-container g.main text.axis-label,  
