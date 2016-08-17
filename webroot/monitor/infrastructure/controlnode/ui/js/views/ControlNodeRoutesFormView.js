@@ -11,7 +11,8 @@ define([
     //Remove all query references once it is moved to core
 ], function (_, Knockback, ContrailView, ContrailListModel, ControlNodeRoutesModel) {
     var routingInstancesDropdownList = [{text:'All',value:'All'}],
-    backwardRouteStack = [], forwardRouteStack = [], filteredPrefix = '', routInstance = '';
+    backwardRouteStack = [], forwardRouteStack = [], filteredPrefix = '',
+    routInstance = '', showRouteStack;
     var ControlNodeRoutesFormView = ContrailView.extend({
         render: function (options) {
             var self = this, viewConfig = self.attributes.viewConfig,
@@ -107,6 +108,7 @@ define([
                         ajaxConfig : routesRemoteConfig,
                         dataParser : function (response) {
                             var selValues = {};
+                            showRouteStack = undefined;
                             backwardRouteStack = []; forwardRouteStack = [];
                             var parsedData = monitorInfraParsers.
                                         parseRoutes(response,routesQueryString);
@@ -143,27 +145,28 @@ define([
                 }else{
                     prefix = showRoute[0].prefix;
                 }
-                if(checkNonExistRoute(backwardRouteStack, routingTable, prefix)){
+                if(showRouteStack === undefined){
+                    showRouteStack = showRouteTable;
                     backwardRouteStack.push({
                         limit: routesQueryString.limit,
                         startRoutingTable: routingTable,
                         startRoutingInstance: routingInstance,
                         startPrefix: prefix,
                         prefix: filteredPrefix,
-                        routingInst:routInstance
+                        routingInst: routInstance
                     });
-                }
-            };
-            var checkNonExistRoute = function(existingStack,routeTable,prefix){
-                var nonExistRecord = false;
-                if(existingStack.length !== 0){
-                    var lastRecord = existingStack[existingStack.length - 1];
-                    if(lastRecord.startRoutingTable !== routeTable){
-                        nonExistRecord = true;
-                    }
-                 return nonExistRecord;
                 }else{
-                    return true;
+                    if(!_.isEqual(showRouteStack, showRouteTable)){
+                        showRouteStack = showRouteTable;
+                        backwardRouteStack.push({
+                            limit: routesQueryString.limit,
+                            startRoutingTable: routingTable,
+                            startRoutingInstance: routingInstance,
+                            startPrefix: prefix,
+                            prefix: filteredPrefix,
+                            routingInst: routInstance
+                        });
+                    }
                 }
             };
             var forwardRoutes = function(model){
@@ -254,7 +257,7 @@ define([
                                     viewConfig: {
                                         path: 'routing_instance',
                                         dataBindValue: 'routing_instance',
-                                        class: "span6",
+                                        class: "col-xs-6",
                                         dataBindOptionList: 'routingInstanceOptionList',
                                         elementConfig: {
                                             defaultValueId: 0,
@@ -270,7 +273,7 @@ define([
                                     viewConfig: {
                                         label:'Prefix',
                                         path: 'prefix',
-                                        class: "span2",
+                                        class: "col-xs-2",
                                         dataBindValue: 'prefix',
                                         dataBindOptionList: 'prefixOptionList',
                                         elementConfig: {
@@ -287,7 +290,7 @@ define([
                                         path: 'routes_limit',
                                         label: 'Limit',
                                         dataBindValue: 'routes_limit',
-                                        class: "span2",
+                                        class: "col-xs-2",
                                         elementConfig: {
                                             dataTextField: "text",
                                             dataValueField: "value",
@@ -305,7 +308,7 @@ define([
                                     viewConfig: {
                                         path: 'peer_source',
                                         dataBindValue: 'peer_source',
-                                        class: "span2",
+                                        class: "col-xs-2",
                                         elementConfig: {
                                             dataSource: {
                                                 type: 'remote',
@@ -331,7 +334,7 @@ define([
                                     viewConfig: {
                                         path: 'address_family',
                                         dataBindValue: 'address_family',
-                                        class: "span2",
+                                        class: "col-xs-2",
                                         elementConfig: {
                                             data: addressFamilyList
                                         }
@@ -343,7 +346,7 @@ define([
                                     viewConfig: {
                                         path: 'protocol',
                                         dataBindValue: 'protocol',
-                                        class: "span2",
+                                        class: "col-xs-2",
                                         elementConfig: {
                                             data: protocols
                                         }
