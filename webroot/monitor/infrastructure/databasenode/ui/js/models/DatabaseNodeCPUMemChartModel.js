@@ -19,7 +19,7 @@ define([
               "to_time": Date.now(),
               "to_time_utc": Date.now(),
               "select": "process_mem_cpu_usage.__key, name, T, "+
-                "process_mem_cpu_usage.mem_virt, process_mem_cpu_usage.mem_res, process_mem_cpu_usage.cpu_share",
+                "MAX(process_mem_cpu_usage.mem_virt), MAX(process_mem_cpu_usage.mem_res), MAX(process_mem_cpu_usage.cpu_share)",
               "where": "process_mem_cpu_usage.__key = cassandra",
               "where_json": null,
               "filter_json": null,

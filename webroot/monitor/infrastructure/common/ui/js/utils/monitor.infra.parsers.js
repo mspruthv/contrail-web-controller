@@ -2376,7 +2376,7 @@ define(
                         cf = crossfilter(respData),
                         groupDim = cf.dimension(function(d) { return d[grpKey];}),
                         tsDim = cf.dimension(function (d) {return d[timeKey];}),
-                        buckets = self.bucketizeConfigNodeStats(respData),
+                        buckets = self.bucketizeConfigNodeStats(respData, null, null, null, 'T='),
                         colorCodes = monitorInfraUtils.getMonitorInfraNodeColors(groupDim.group().all().length),
                         colorCodes = colorCodes.slice(0, groupDim.group().all().length),
                         i, j,
